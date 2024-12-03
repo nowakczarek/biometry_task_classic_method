@@ -1,1 +1,3 @@
-Started Working on tool that will implement biometric security. I'm planning to do classic version using SIFT Algorithm. Later on I'd like to do a version using TensorFlow
+Started Working on tool that will implement biometric security.
+
+Currently finished easy example with matching features and started loading the whole dir for images and labels
