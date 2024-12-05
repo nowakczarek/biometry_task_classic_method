@@ -72,13 +72,13 @@ def detect_and_match_fingers(image1, image2):
     keypoint1, descriptor1 = sift.detectAndCompute(image1, None)
     keypoint2, descriptor2 = sift.detectAndCompute(image2, None)
 
+    bf = cv2.BFMatcher()
+    matches = bf.knnMatch(descriptor1, descriptor2, k=2)
+
     # plot_img1 = img1.copy()
     # plot_img2 = img2.copy()
     # plot_img1 = cv2.drawKeypoints(image1, keypoint1, plot_img1)
     # plot_img2 = cv2.drawKeypoints(image2, keypoint2, plot_img2)
-  
-    bf = cv2.BFMatcher()
-    matches = bf.knnMatch(descriptor1, descriptor2, k=2)
 
     # matcher_img = cv2.drawMatchesKnn(image1, keypoint1, image2, keypoint2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
@@ -93,35 +93,35 @@ def calculate_matches(matches):
         if m.distance < 0.9 * n.distance:
             good_matches.append([m])
     return good_matches
+ 
+all_images = load_data('SOCOFING/real/')
+altered_easy = load_data('SOCOFING/altered/altered_easy/')
 
-# all_images = load_data('SOCOFING/real/')
-# altered_easy = load_data('SOCOFING/altered/altered_easy/')
+all = altered_easy + all_images
 
-# all = altered_easy + all_images
+processed_images = [preprocess_image(img) for img in all]
 
-# processed_images = [preprocess_image(img) for img in all]
+score = []
 
-# score = []
+for i in range(len(processed_images) - 1):
+    for j in range(i + 1, len(processed_images)):
+        matches = detect_and_match_fingers(processed_images[i], processed_images[j])
+        good_matches = calculate_matches(matches)
+        accuracy = len(good_matches)/len(matches)
+        score.append(accuracy)
+        print(f"Pair {i} - {j} : Accuracy: {accuracy:.2f}%")
 
-# for i in range(len(processed_images) - 1):
-#     for j in range(i + 1, len(processed_images)):
-#         matches = detect_and_match_fingers(processed_images[i], processed_images[j])
-#         good_matches = calculate_matches(matches)
-#         accuracy = len(good_matches)/len(matches)
-#         score.append(accuracy)
-#         print(f"Pair {i} - {j} : Accuracy: {accuracy:.2f}%")
+overall_score = np.mean(score)
+print(f'Overall Score: {overall_score: .2f} %')
 
-# overall_score = np.mean(score)
-# print(f'Overall Score: {overall_score: .2f} %')
+# img1 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
+# img2 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Zcut.BMP', cv2.IMREAD_GRAYSCALE)
 
-img1 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
-img2 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Zcut.BMP', cv2.IMREAD_GRAYSCALE)
+# img_test = preprocess_image(img1)
+# img_test2 = preprocess_image(img2)
 
-img_test = preprocess_image(img1)
-img_test2 = preprocess_image(img2)
+# matches = detect_and_match_fingers(img_test, img_test2)
+# good_matches = calculate_matches(matches)
 
-matches = detect_and_match_fingers(img_test, img_test2)
-good_matches = calculate_matches(matches)
-
-print(len(good_matches))
-print(len(matches))
+# print(len(good_matches))
+# print(len(matches))
