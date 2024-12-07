@@ -40,8 +40,8 @@ def preprocess_image(image):
     #implementing gabor filtering
     filtered = [cv2.filter2D(binary_image, cv2.CV_32F, kernel) for kernel in kernel_bank]
 
-    best_filtered = np.max(filtered, axis=0)
-    gabor_img_uint8 = np.uint8(best_filtered * 255 / np.max(best_filtered))
+    merged = np.max(filtered, axis=0)
+    gabor_img_uint8 = np.uint8(merged * 255 / np.max(merged))
 
     return gabor_img_uint8
 
@@ -56,8 +56,8 @@ def detect_and_match_fingers(image1, image2):
 
     # for matching of two fingerprints for testing
      
-    # plot_img1 = img1.copy()
-    # plot_img2 = img2.copy()
+    # plot_img1 = image1.copy()
+    # plot_img2 = image2.copy()
     # plot_img1 = cv2.drawKeypoints(image1, keypoint1, plot_img1)
     # plot_img2 = cv2.drawKeypoints(image2, keypoint2, plot_img2)
 
@@ -74,39 +74,44 @@ def calculate_matches(matches):
         if m.distance < 0.9 * n.distance:
             good_matches.append([m])
     return good_matches
- 
 
-real_images_path, real_images = load_data('SOCOFING/real/')
-altered_images_path, altered_easy  = load_data('SOCOFING/altered/altered_easy/')
 
+def calculating_matches_between_images(path1, images1, path2, images2):
+    scores = []
+    for real_image_path, real_image in enumerate(images1):
+        real_name = path1[real_image_path].split('.')[0]
+        print(f'Matching for {real_name}')
+
+        for altered_image_path, altered_image in enumerate(images2):
+            if real_name in path2[altered_image_path]:
+                matches = detect_and_match_fingers(real_image, altered_image)
+                good_matches = calculate_matches(matches)
+                accuracy = len(good_matches) / len(matches)
+                scores.append(accuracy)
+                print(f"Accuracy for set {real_image_path} - {altered_image_path} = {accuracy: .2f}")
+
+    return scores
+
+
+real_images_path, real_images = load_data('SOCOfing/real/')
+altered_easy_images_path, altered_easy  = load_data('SOCOfing/altered/altered_easy/')
+altered_medium_images_path, altered_medium = load_data('SOCOfing/altered/altered_medium/')
+altered_hard_images_path, altered_hard = load_data('SOCOfing/altered/altered_hard/')
 
 preprocessed_real = [preprocess_image(img) for img in real_images]
 preprocessed_altered_easy = [preprocess_image(img) for img in altered_easy]
+preprocessed_altered_medium = [preprocess_image(img) for img in altered_medium]
+preprocessed_altered_hard = [preprocess_image(img) for img in altered_hard]
 
-scores = []
-
-for real_image_path, real_image in enumerate(preprocessed_real):
-    real_name = real_images_path[real_image_path].split('.')[0]
-    print(f'Matching for {real_name}')
-
-    for altered_image_path, altered_image in enumerate(preprocessed_altered_easy):
-        if real_name in altered_images_path[altered_image_path]:
-            matches = detect_and_match_fingers(real_image, altered_image)
-            good_matches = calculate_matches(matches)
-            accuracy = len(good_matches) / len(matches)
-            scores.append(accuracy)
-            print(f"Accuracy for set {real_image_path} - {altered_image_path} = {accuracy: .2f}")
-
+scores = calculating_matches_between_images(altered_easy_images_path, preprocessed_altered_easy, altered_medium_images_path, preprocessed_altered_medium)
 overall_score = np.mean(scores)
 
-print(f'Overall score - {overall_score: .2f}')
-
-
+print(f'Overall score - {overall_score}')
 
 # matching of two fingerprints for testing
 
 # img1 = cv2.imread('SOCOfing/real/1__M_Left_index_finger.BMP', cv2.IMREAD_GRAYSCALE)
-# img2 = cv2.imread('SOCOfing/altered/altered_easy/1__M_Left_index_finger_Zcut.BMP', cv2.IMREAD_GRAYSCALE)
+# img2 = cv2.imread('SOCOfing/altered/altered_easy/1__M_Left_index_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
 
 # img_test = preprocess_image(img1)
 # img_test2 = preprocess_image(img2)
