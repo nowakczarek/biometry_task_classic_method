@@ -1,44 +1,19 @@
 import numpy as np 
 import matplotlib.pyplot as plt
-from sklearn import preprocessing 
-from sklearn.model_selection import train_test_split
 import cv2
 import os
-
-
-# load data in np form labels and images
-# def load_data_nn():
-#     all_paths = []
-#     sample_ids = []
-
-#     real_path = 'SOCOfing/real/'
-    # for finger in os.listdir(real_path):
-    #     if 'BMP' in finger:
-    #         all_paths.append(real_path + finger)
-    #         sample_ids.append(finger.split('_finger')[0])
-
-#     altered_paths = ['SOCOfing/altered/altered_easy/', 'SOCOfing/altered/altered_medium/', 'SOCOfing/altered/altered_hard/']
-
-    # for folder in altered_paths:
-    #     for finger in os.listdir(folder):
-    #         if 'BMP' in finger:
-    #             all_paths.append(folder + finger)
-    #             sample_ids.append(finger.split('_finger')[0])
-    
-    # images = np.array(all_paths)
-    # labels = np.array(sample_ids)
-
-#     return images, labels
-
 
 #load data for classic method
 def load_data(images_path):
     images = []
+    images_filenames = []
     for file in os.listdir(images_path):
-        img = cv2.imread(images_path + file, cv2.IMREAD_GRAYSCALE)
-        images.append(img)
-
-    return images
+        if 'BMP' in file:
+            img = cv2.imread(images_path + file, cv2.IMREAD_GRAYSCALE)
+            images.append(img)
+            images_filenames.append(file)
+            
+    return images_filenames, images
 
 def preprocess_image(image):
     #adaptive thresholding of image
@@ -52,10 +27,10 @@ def preprocess_image(image):
 
     #setting up gabor filtering
     sigma = 1
-    kernel_size = (5,5)
+    kernel_size = (7,7)
     theta = 0
-    lambd = 5
-    gamma = 0.5
+    lambd = 2
+    gamma = 1
     psi = 1
     kernel = cv2.getGaborKernel(kernel_size, sigma, theta, lambd, gamma, psi)
 
@@ -75,6 +50,8 @@ def detect_and_match_fingers(image1, image2):
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(descriptor1, descriptor2, k=2)
 
+    # for matching of two fingerprints for testing
+     
     # plot_img1 = img1.copy()
     # plot_img2 = img2.copy()
     # plot_img1 = cv2.drawKeypoints(image1, keypoint1, plot_img1)
@@ -94,28 +71,38 @@ def calculate_matches(matches):
             good_matches.append([m])
     return good_matches
  
-all_images = load_data('SOCOFING/real/')
-altered_easy = load_data('SOCOFING/altered/altered_easy/')
 
-all = altered_easy + all_images
+real_images_path, real_images = load_data('SOCOFING/real/')
+altered_images_path, altered_easy  = load_data('SOCOFING/altered/altered_easy/')
 
-processed_images = [preprocess_image(img) for img in all]
 
-score = []
+preprocessed_real = [preprocess_image(img) for img in real_images]
+preprocessed_altered_easy = [preprocess_image(img) for img in altered_easy]
 
-for i in range(len(processed_images) - 1):
-    for j in range(i + 1, len(processed_images)):
-        matches = detect_and_match_fingers(processed_images[i], processed_images[j])
-        good_matches = calculate_matches(matches)
-        accuracy = len(good_matches)/len(matches)
-        score.append(accuracy)
-        print(f"Pair {i} - {j} : Accuracy: {accuracy:.2f}%")
+scores = []
 
-overall_score = np.mean(score)
-print(f'Overall Score: {overall_score: .2f} %')
+for real_image_path, real_image in enumerate(preprocessed_real):
+    real_name = real_images_path[real_image_path].split('.')[0]
+    print(f'Matching for {real_name}')
 
-# img1 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
-# img2 = cv2.imread('SOCOfing/altered/altered_hard/2__F_Right_thumb_finger_Zcut.BMP', cv2.IMREAD_GRAYSCALE)
+    for altered_image_path, altered_image in enumerate(preprocessed_altered_easy):
+        if real_name in altered_images_path[altered_image_path]:
+            matches = detect_and_match_fingers(real_image, altered_image)
+            good_matches = calculate_matches(matches)
+            accuracy = len(good_matches) / len(matches)
+            scores.append(accuracy)
+            print(f"Accuracy for set {real_image_path} - {altered_image_path} = {accuracy: .2f}")
+
+overall_score = np.mean(scores)
+
+print(f'Overall score - {overall_score: .2f}')
+
+
+
+# matching of two fingerprints for testing
+
+# img1 = cv2.imread('SOCOfing/real/1__M_Left_index_finger.BMP', cv2.IMREAD_GRAYSCALE)
+# img2 = cv2.imread('SOCOfing/altered/altered_easy/1__M_Left_index_finger_Zcut.BMP', cv2.IMREAD_GRAYSCALE)
 
 # img_test = preprocess_image(img1)
 # img_test2 = preprocess_image(img2)
@@ -123,5 +110,5 @@ print(f'Overall Score: {overall_score: .2f} %')
 # matches = detect_and_match_fingers(img_test, img_test2)
 # good_matches = calculate_matches(matches)
 
-# print(len(good_matches))
-# print(len(matches))
+# print(len(good_matches)/len(matches))
+
