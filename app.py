@@ -27,17 +27,21 @@ def preprocess_image(image):
 
     #setting up gabor filtering
     sigma = 1
-    kernel_size = (7,7)
-    theta = 0
-    lambd = 2
+    kernel_size = (1,1)
+    lambd = 6
     gamma = 1
     psi = 1
-    kernel = cv2.getGaborKernel(kernel_size, sigma, theta, lambd, gamma, psi)
+
+    #setting up different orientations to pick the best resulting one
+    orientations = np.arange(0, np.pi, np.pi/4)
+
+    kernel_bank = [cv2.getGaborKernel(kernel_size, sigma, o, lambd, gamma, psi) for o in orientations]
 
     #implementing gabor filtering
-    gabor_img = cv2.filter2D(binary_image, cv2.CV_32F, kernel)
+    filtered = [cv2.filter2D(binary_image, cv2.CV_32F, kernel) for kernel in kernel_bank]
 
-    gabor_img_uint8 = np.uint8(gabor_img * 255 / np.max(gabor_img))
+    best_filtered = np.max(filtered, axis=0)
+    gabor_img_uint8 = np.uint8(best_filtered * 255 / np.max(best_filtered))
 
     return gabor_img_uint8
 
