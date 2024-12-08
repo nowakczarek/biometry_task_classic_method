@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import cv2
 import os
 
-#load data for classic method
 def load_data(images_path):
     images = []
     images_filenames = []
@@ -25,15 +24,19 @@ def preprocess_image(image):
 
     binary_image = cv2.adaptiveThreshold(image, maximum_value, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, threshold_type, blocksize, C)
 
+    #apply morphological closing
+    kernel_closing = np.ones((1, 1))
+    closed_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel_closing)
+
     #setting up gabor filtering
-    sigma = 1
-    kernel_size = (1,1)
-    lambd = 6
-    gamma = 1
+    sigma = 2
+    kernel_size = (7,7)
+    lambd = 5
+    gamma = 0.5
     psi = 1
 
     #setting up different orientations to pick the best resulting one
-    orientations = np.arange(0, np.pi, np.pi/4)
+    orientations = np.arange(0, np.pi, np.pi/8)
 
     kernel_bank = [cv2.getGaborKernel(kernel_size, sigma, o, lambd, gamma, psi) for o in orientations]
 
@@ -55,7 +58,7 @@ def detect_and_match_fingers(image1, image2):
     matches = bf.knnMatch(descriptor1, descriptor2, k=2)
 
     # for matching of two fingerprints for testing
-     
+
     # plot_img1 = image1.copy()
     # plot_img2 = image2.copy()
     # plot_img1 = cv2.drawKeypoints(image1, keypoint1, plot_img1)
@@ -103,15 +106,15 @@ preprocessed_altered_easy = [preprocess_image(img) for img in altered_easy]
 preprocessed_altered_medium = [preprocess_image(img) for img in altered_medium]
 preprocessed_altered_hard = [preprocess_image(img) for img in altered_hard]
 
-scores = calculating_matches_between_images(altered_easy_images_path, preprocessed_altered_easy, altered_medium_images_path, preprocessed_altered_medium)
+scores = calculating_matches_between_images(real_images_path, preprocessed_real, altered_medium_images_path, preprocessed_altered_medium)
 overall_score = np.mean(scores)
 
-print(f'Overall score - {overall_score}')
+print(f'Overall score - {overall_score: .2f}')
 
 # matching of two fingerprints for testing
 
-# img1 = cv2.imread('SOCOfing/real/1__M_Left_index_finger.BMP', cv2.IMREAD_GRAYSCALE)
-# img2 = cv2.imread('SOCOfing/altered/altered_easy/1__M_Left_index_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
+# img1 = cv2.imread('SOCOfing/real/2__F_Right_thumb_finger.BMP', cv2.IMREAD_GRAYSCALE)
+# img2 = cv2.imread('SOCOfing/altered/altered_easy/2__F_Left_little_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
 
 # img_test = preprocess_image(img1)
 # img_test2 = preprocess_image(img2)
