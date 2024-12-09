@@ -24,14 +24,10 @@ def preprocess_image(image):
 
     binary_image = cv2.adaptiveThreshold(image, maximum_value, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, threshold_type, blocksize, C)
 
-    #apply morphological closing
-    kernel_closing = np.ones((1, 1))
-    closed_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel_closing)
-
     #setting up gabor filtering
-    sigma = 2
-    kernel_size = (7,7)
-    lambd = 5
+    sigma = 1
+    kernel_size = (9,9)
+    lambd = 3
     gamma = 0.5
     psi = 1
 
@@ -44,7 +40,12 @@ def preprocess_image(image):
     filtered = [cv2.filter2D(binary_image, cv2.CV_32F, kernel) for kernel in kernel_bank]
 
     merged = np.max(filtered, axis=0)
-    gabor_img_uint8 = np.uint8(merged * 255 / np.max(merged))
+
+    #apply morphological closing
+    kernel_closing = np.ones((1, 1))
+    closed_image = cv2.morphologyEx(merged, cv2.MORPH_CLOSE, kernel_closing)
+
+    gabor_img_uint8 = np.uint8(closed_image * 255 / np.max(merged))
 
     return gabor_img_uint8
 
@@ -106,15 +107,15 @@ preprocessed_altered_easy = [preprocess_image(img) for img in altered_easy]
 preprocessed_altered_medium = [preprocess_image(img) for img in altered_medium]
 preprocessed_altered_hard = [preprocess_image(img) for img in altered_hard]
 
-scores = calculating_matches_between_images(real_images_path, preprocessed_real, altered_medium_images_path, preprocessed_altered_medium)
+scores = calculating_matches_between_images(real_images_path, preprocessed_real, altered_easy_images_path, preprocessed_altered_easy)
 overall_score = np.mean(scores)
 
 print(f'Overall score - {overall_score: .2f}')
 
 # matching of two fingerprints for testing
 
-# img1 = cv2.imread('SOCOfing/real/2__F_Right_thumb_finger.BMP', cv2.IMREAD_GRAYSCALE)
-# img2 = cv2.imread('SOCOfing/altered/altered_easy/2__F_Left_little_finger_Obl.BMP', cv2.IMREAD_GRAYSCALE)
+# img1 = cv2.imread('SOCOfing/real/1__M_Left_index_finger.BMP', cv2.IMREAD_GRAYSCALE)
+# img2 = cv2.imread('SOCOfing/altered/altered_easy/1__M_Left_index_finger_CR.BMP', cv2.IMREAD_GRAYSCALE)
 
 # img_test = preprocess_image(img1)
 # img_test2 = preprocess_image(img2)
