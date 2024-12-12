@@ -1,3 +1,8 @@
-Started Working on tool that will implement biometric security.
+My approach to biometry task of matching fingerprints based on SOCOfing dataset.
 
-Currently finished easy example with matching features and started loading the whole dir for images and labels
+Made with classic method, I used the functionality of:
+- adaptive thresholding
+- gabor filtering
+- closing morphology
+- SIFT algorithm
+- BFMatcher
